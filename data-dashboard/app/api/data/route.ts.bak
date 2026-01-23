@@ -1,0 +1,74 @@
+import { NextResponse } from 'next/server';
+import * as xlsx from 'xlsx';
+import { join } from 'path';
+import { DailyData, PlatformData } from '@/lib/types';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * 读取并解析Excel文件
+ */
+function parseExcelFile(filePath: string, platform: '美团' | '饿了么'): DailyData[] {
+  try {
+    const workbook = xlsx.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData: any[] = xlsx.utils.sheet_to_json(worksheet);
+
+    return jsonData.map((row) => {
+      // 处理日期格式 - Excel日期可能是序列号或字符串
+      let dateStr = '';
+      if (row['日期']) {
+        const dateValue = row['日期'];
+        if (typeof dateValue === 'number') {
+          // Excel日期序列号转换
+          const date = xlsx.SSF.parse_date_code(dateValue);
+          dateStr = `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
+        } else {
+          dateStr = String(dateValue);
+        }
+      }
+
+      return {
+        date: dateStr,
+        cancellations: Number(row['解约数'] || 0),
+        commissionStores: Number(row['抽点店铺数'] || 0),
+        totalRevenue: Number(row['回款总金额'] || 0),
+      };
+    });
+  } catch (error) {
+    console.error(`Error reading ${platform} data:`, error);
+    return [];
+  }
+}
+
+export async function GET() {
+  try {
+    const publicDir = join(process.cwd(), 'public', 'data');
+
+    const meituanPath = join(publicDir, '美团数据.xlsx');
+    const elemePath = join(publicDir, '饿了么数据.xlsx');
+
+    const meituanData = parseExcelFile(meituanPath, '美团');
+    const elemeData = parseExcelFile(elemePath, '饿了么');
+
+    const response: PlatformData[] = [
+      {
+        platform: '美团',
+        data: meituanData,
+      },
+      {
+        platform: '饿了么',
+        data: elemeData,
+      },
+    ];
+
+    return NextResponse.json(response);
+  } catch (error) {
+    console.error('Error in data API:', error);
+    return NextResponse.json(
+      { error: 'Failed to read data files' },
+      { status: 500 }
+    );
+  }
+}
