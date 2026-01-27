@@ -1,0 +1,45 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# production
+build/
+
+# misc
+.DS_Store
+*.pem
+*.log
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env files
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+
+# temp files
+nul
+*.err.log
+devserver.log
+devserver.err.log
+codex-dev.log
+codex-dev.err.log
+.codex-dev.log
+.codex-dev.err.log
+dev-server.log
+dev-server.err
+npm-dev.log
