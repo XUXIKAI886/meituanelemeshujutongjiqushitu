@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from 'recharts';
 import { formatCurrency, formatNumber } from '@/lib/data-utils';
 
@@ -91,6 +92,14 @@ export function CancellationsChart({ data }: ChartsProps) {
     value: item.eleme.cancellations,
   }));
 
+  // Calculate averages
+  const meituanAverage = meituanChartData.length
+    ? meituanChartData.reduce((sum, item) => sum + item.value, 0) / meituanChartData.length
+    : 0;
+  const elemeAverage = elemeChartData.length
+    ? elemeChartData.reduce((sum, item) => sum + item.value, 0) / elemeChartData.length
+    : 0;
+
   return (
     <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
       <ChartCard title="美团解约" subtitle="每日变化" platform="meituan">
@@ -106,6 +115,7 @@ export function CancellationsChart({ data }: ChartsProps) {
             <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip platform="meituan" />} />
+            <ReferenceLine y={meituanAverage} stroke="red" strokeDasharray="5 5" strokeWidth={2} />
             <Area type="monotone" dataKey="value" stroke="hsl(var(--meituan))" strokeWidth={2} fill="url(#meituanGradient)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--meituan))', strokeWidth: 0 }} />
           </AreaChart>
         </ResponsiveContainer>
@@ -124,6 +134,7 @@ export function CancellationsChart({ data }: ChartsProps) {
             <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip platform="eleme" />} />
+            <ReferenceLine y={elemeAverage} stroke="red" strokeDasharray="5 5" strokeWidth={2} />
             <Area type="monotone" dataKey="value" stroke="hsl(var(--eleme))" strokeWidth={2} fill="url(#elemeGradient)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--eleme))', strokeWidth: 0 }} />
           </AreaChart>
         </ResponsiveContainer>
