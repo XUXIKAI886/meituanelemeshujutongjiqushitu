@@ -104,7 +104,7 @@ export function CancellationsChart({ data }: ChartsProps) {
     <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
       <ChartCard title="美团解约" subtitle="每日变化" platform="meituan">
         <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={meituanChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+            <AreaChart data={meituanChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="meituanGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="hsl(var(--meituan))" stopOpacity={0.3} />
@@ -122,10 +122,12 @@ export function CancellationsChart({ data }: ChartsProps) {
               strokeWidth={2}
               label={{ 
                 value: formatNumber(Math.round(meituanAverage)), 
-                position: 'right', 
+                position: 'insideTopLeft', 
                 fill: 'red', 
                 fontSize: 11,
-                fontWeight: 600
+                fontWeight: 600,
+                dx: 5,
+                dy: -5
               }}
             />
             <Area type="monotone" dataKey="value" stroke="hsl(var(--meituan))" strokeWidth={2} fill="url(#meituanGradient)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--meituan))', strokeWidth: 0 }} />
@@ -135,7 +137,7 @@ export function CancellationsChart({ data }: ChartsProps) {
 
       <ChartCard title="饿了么解约" subtitle="每日变化" platform="eleme">
         <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={elemeChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+            <AreaChart data={elemeChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="elemeGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="hsl(var(--eleme))" stopOpacity={0.3} />
@@ -153,10 +155,12 @@ export function CancellationsChart({ data }: ChartsProps) {
               strokeWidth={2}
               label={{ 
                 value: formatNumber(Math.round(elemeAverage)), 
-                position: 'right', 
+                position: 'insideTopLeft', 
                 fill: 'red', 
                 fontSize: 11,
-                fontWeight: 600
+                fontWeight: 600,
+                dx: 5,
+                dy: -5
               }}
             />
             <Area type="monotone" dataKey="value" stroke="hsl(var(--eleme))" strokeWidth={2} fill="url(#elemeGradient)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--eleme))', strokeWidth: 0 }} />
