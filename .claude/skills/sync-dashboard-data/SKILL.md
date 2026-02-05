@@ -1,18 +1,19 @@
 ---
 name: sync-dashboard-data
-description: 自动同步美团和饿了么的Excel数据文件到dashboard，并启动开发服务器。当用户更新了数据表格后，运行此skill可自动完成数据同步和服务器启动。
+description: 自动同步美团和饿了么的Excel数据文件到dashboard，生成静态JSON数据，并推送到GitHub触发自动部署。
 ---
 
-# 数据同步与服务器启动 Skill
+# 数据同步与自动部署 Skill
 
-这个skill用于自动化美团&饿了么数据分析平台的数据更新流程。
+这个skill用于自动化美团&饿了么数据分析平台的数据更新和部署流程。
 
 ## 使用场景
 
 当用户更新了根目录下的Excel数据文件（`美团数据.xlsx` 和 `饿了么数据.xlsx`）后，运行此skill可以：
 1. 自动检查并验证Excel文件是否存在
 2. 将最新的数据文件同步到dashboard应用
-3. 启动开发服务器，展示最新数据
+3. 生成静态JSON数据文件
+4. 提交并推送到GitHub，触发自动部署
 
 ## 执行流程
 
@@ -31,16 +32,25 @@ description: 自动同步美团和饿了么的Excel数据文件到dashboard，�
 - 目标目录：`data-dashboard/public/data/`
 - 操作：覆盖现有文件
 
-复制完成后，显示文件的修改时间和大小，确认同步成功。
+### 3. 生成静态JSON数据
 
-### 3. 启动开发服务器
+在 `data-dashboard/` 目录下执行数据生成脚本：
+```bash
+cd data-dashboard && node scripts/generate-data.js
+```
 
-在 `data-dashboard/` 目录下执行 `npm run dev` 启动Next.js开发服务器。
+这会将Excel数据转换为 `public/data/platform-data.json` 文件。
 
-服务器启动后：
-- 本地访问地址：http://localhost:3000
-- 自动读取最新的Excel数据
-- 实时展示数据分析结果
+### 4. 提交并推送到GitHub
+
+将更改提交到Git并推送到远程仓库，触发GitHub Actions自动部署：
+- 添加更改的文件到暂存区
+- 创建提交（包含数据更新说明）
+- 推送到远程仓库
+
+推送后，GitHub Actions会自动：
+- 构建Next.js静态站点
+- 部署到GitHub Pages
 
 ## 项目上下文
 
@@ -60,63 +70,72 @@ description: 自动同步美团和饿了么的Excel数据文件到dashboard，�
 
 ### 技术架构
 
-- **框架**: Next.js 16.0.3 (Turbopack)
-- **数据处理**: xlsx库读取Excel文件
-- **API**: `/api/data` 路由处理数据读取和转换
+- **框架**: Next.js 16.0.3 (静态导出)
+- **数据处理**: xlsx库读取Excel，构建时生成JSON
+- **部署**: GitHub Pages + GitHub Actions
 - **UI**: shadcn/ui组件库，响应式设计
+
+### 线上地址
+
+https://xuxikai886.github.io/meituanelemeshujutongjiqushitu/
 
 ## 执行步骤
 
 按照以下步骤执行任务：
 
-1. **使用TodoWrite工具创建任务列表**，包含以下任务：
-   - 检查Excel文件是否存在
-   - 同步数据文件到dashboard
-   - 启动开发服务器
-
-2. **检查数据文件**：
+1. **检查数据文件**：
    ```bash
    cd "项目根目录" && ls -lh 美团数据.xlsx 饿了么数据.xlsx
    ```
    验证两个文件都存在，并显示文件大小和修改时间。
 
-3. **同步数据文件**：
+2. **同步数据文件**：
    ```bash
    cp "根目录/美团数据.xlsx" "data-dashboard/public/data/美团数据.xlsx"
    cp "根目录/饿了么数据.xlsx" "data-dashboard/public/data/饿了么数据.xlsx"
    ```
 
-4. **验证同步结果**：
+3. **验证同步结果**：
    ```bash
    cd "data-dashboard/public/data" && ls -lh *.xlsx
    ```
    确认文件已成功复制，修改时间为最新。
 
-5. **启动开发服务器**：
+4. **生成静态JSON数据**：
    ```bash
-   cd "data-dashboard" && npm run dev
+   cd "data-dashboard" && node scripts/generate-data.js
    ```
-   使用 `run_in_background=true` 参数在后台运行。
+   确认生成的JSON文件包含正确的数据条数。
 
-6. **等待服务器启动**：
-   等待5-10秒，然后读取服务器输出，确认服务器成功启动。
+5. **提交更改到Git**：
+   ```bash
+   git add 美团数据.xlsx 饿了么数据.xlsx data-dashboard/public/data/
+   git commit -m "chore: 更新数据 $(date +%Y-%m-%d)"
+   ```
+
+6. **推送到远程仓库**：
+   ```bash
+   git push origin main
+   ```
 
 7. **报告完成状态**：
    向用户报告：
    - 数据文件同步成功（显示文件大小和修改时间）
-   - 服务器启动成功（显示访问地址）
-   - 提示用户可以访问 http://localhost:3000 查看最新数据
+   - JSON数据生成成功（显示数据条数）
+   - 代码已推送到GitHub
+   - 提示用户GitHub Actions正在自动部署
+   - 提供线上访问地址：https://xuxikai886.github.io/meituanelemeshujutongjiqushitu/
 
 ## 注意事项
 
-- 如果服务器已经在运行，先检查是否需要停止旧的服务器进程
 - 确保 `data-dashboard/public/data/` 目录存在
 - 文件复制会覆盖现有文件，这是预期行为
-- 开发服务器会自动检测文件变化并刷新数据
+- 推送后需等待GitHub Actions完成部署（通常1-2分钟）
+- 可在 https://github.com/XUXIKAI886/meituanelemeshujutongjiqushitu/actions 查看部署状态
 
 ## 错误处理
 
 - **文件不存在**：提示用户需要先在根目录准备Excel文件
 - **目录不存在**：自动创建 `data-dashboard/public/data/` 目录
-- **服务器启动失败**：检查端口3000是否被占用，提示用户处理
-- **npm依赖问题**：提示用户先运行 `npm install`
+- **Git推送失败**：检查网络连接和仓库权限
+- **数据生成失败**：检查Excel文件格式是否正确
