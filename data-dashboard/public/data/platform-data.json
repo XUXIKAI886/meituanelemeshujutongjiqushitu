@@ -1849,6 +1849,12 @@
         "cancellations": 4,
         "commissionStores": 216,
         "totalRevenue": 2013.45
+      },
+      {
+        "date": "2026-02-03",
+        "cancellations": 0,
+        "commissionStores": 218,
+        "totalRevenue": 1853.12
       }
     ]
   },
@@ -2646,6 +2652,12 @@
         "cancellations": 0,
         "commissionStores": 80,
         "totalRevenue": 529.19
+      },
+      {
+        "date": "2026-02-04",
+        "cancellations": 0,
+        "commissionStores": 72,
+        "totalRevenue": 574.72
       }
     ]
   }
