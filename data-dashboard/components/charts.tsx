@@ -115,7 +115,19 @@ export function CancellationsChart({ data }: ChartsProps) {
             <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip platform="meituan" />} />
-            <ReferenceLine y={meituanAverage} stroke="red" strokeDasharray="5 5" strokeWidth={2} />
+            <ReferenceLine 
+              y={meituanAverage} 
+              stroke="red" 
+              strokeDasharray="5 5" 
+              strokeWidth={2}
+              label={{ 
+                value: formatNumber(Math.round(meituanAverage)), 
+                position: 'right', 
+                fill: 'red', 
+                fontSize: 11,
+                fontWeight: 600
+              }}
+            />
             <Area type="monotone" dataKey="value" stroke="hsl(var(--meituan))" strokeWidth={2} fill="url(#meituanGradient)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--meituan))', strokeWidth: 0 }} />
           </AreaChart>
         </ResponsiveContainer>
@@ -134,7 +146,19 @@ export function CancellationsChart({ data }: ChartsProps) {
             <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip platform="eleme" />} />
-            <ReferenceLine y={elemeAverage} stroke="red" strokeDasharray="5 5" strokeWidth={2} />
+            <ReferenceLine 
+              y={elemeAverage} 
+              stroke="red" 
+              strokeDasharray="5 5" 
+              strokeWidth={2}
+              label={{ 
+                value: formatNumber(Math.round(elemeAverage)), 
+                position: 'right', 
+                fill: 'red', 
+                fontSize: 11,
+                fontWeight: 600
+              }}
+            />
             <Area type="monotone" dataKey="value" stroke="hsl(var(--eleme))" strokeWidth={2} fill="url(#elemeGradient)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--eleme))', strokeWidth: 0 }} />
           </AreaChart>
         </ResponsiveContainer>
