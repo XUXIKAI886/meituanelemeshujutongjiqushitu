@@ -3,25 +3,50 @@
 import { useEffect, useState } from 'react';
 
 export function ThemeToggle() {
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window === 'undefined') {
-      return true;
-    }
-
-    const savedTheme = window.localStorage.getItem('theme');
-    return savedTheme ? savedTheme === 'dark' : true;
-  });
+  const [isDark, setIsDark] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    // 检查本地存储或系统偏好
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setIsDark(savedTheme === 'dark');
+    } else {
+      // 默认使用暗黑主题
+      setIsDark(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     const root = document.documentElement;
-    root.classList.toggle('light', !isDark);
-    window.localStorage.setItem('theme', isDark ? 'dark' : 'light');
-  }, [isDark]);
+    if (isDark) {
+      root.classList.remove('light');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.add('light');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark, mounted]);
+
+  const toggleTheme = () => {
+    setIsDark(!isDark);
+  };
+
+  // 避免 hydration 不匹配
+  if (!mounted) {
+    return (
+      <button className="theme-toggle" aria-label="切换主题">
+        <span className="sr-only">切换主题</span>
+      </button>
+    );
+  }
 
   return (
     <button
-      suppressHydrationWarning
-      onClick={() => setIsDark((current) => !current)}
+      onClick={toggleTheme}
       className="theme-toggle"
       aria-label={isDark ? '切换到明亮模式' : '切换到暗黑模式'}
       title={isDark ? '切换到明亮模式' : '切换到暗黑模式'}

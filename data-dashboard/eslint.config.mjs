@@ -12,9 +12,6 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    "scripts/**/*.js",
-    "test-data.js",
-    "tailwind.config.js",
   ]),
 ]);
 
