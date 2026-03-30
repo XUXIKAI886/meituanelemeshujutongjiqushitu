@@ -1,278 +1,186 @@
 'use client';
 
-import { CombinedDailyData } from '@/lib/types';
 import {
-  AreaChart,
   Area,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
 } from 'recharts';
-import { formatCurrency, formatNumber } from '@/lib/data-utils';
 
-interface ChartsProps {
+import { formatCurrency, formatNumber } from '@/lib/data-utils';
+import { buildCombinedMetricSeries, TrendMetricKey } from '@/lib/trend-chart-utils';
+import { CombinedDailyData } from '@/lib/types';
+
+interface TrendChartsProps {
   data: CombinedDailyData[];
 }
 
-// 过滤美团数据，排除所有指标都为0的记录
-function filterMeituanData(data: CombinedDailyData[]) {
-  return data.filter((item) =>
-    item.meituan.cancellations !== 0 ||
-    item.meituan.commissionStores !== 0 ||
-    item.meituan.totalRevenue !== 0
-  );
-}
-
-// 自定义 Tooltip 组件 - 更紧凑的设计
-interface CustomTooltipProps {
+interface TooltipProps {
   active?: boolean;
-  payload?: Array<{ value: number }>;
   label?: string;
-  platform: 'meituan' | 'eleme';
-  valueFormatter?: (value: number) => string;
+  payload?: Array<{ value: number; dataKey: string }>;
+  valueFormatter: (value: number) => string;
 }
 
-function CustomTooltip({ active, payload, label, platform, valueFormatter = formatNumber }: CustomTooltipProps) {
-  if (!active || !payload || !payload.length) return null;
-
-  const accentColor = platform === 'meituan' ? 'bg-[hsl(var(--meituan))]' : 'bg-[hsl(var(--eleme))]';
-  const textColor = platform === 'meituan' ? 'text-meituan' : 'text-eleme';
-
-  return (
-    <div className="glass-card rounded-lg px-3 py-2 border border-foreground/10 shadow-xl">
-      <p className="text-[10px] text-foreground/50 mb-1">{label}</p>
-      <div className="flex items-center gap-2">
-        <span className={`w-1.5 h-1.5 rounded-full ${accentColor}`}></span>
-        <span className={`font-mono text-sm font-semibold ${textColor}`}>
-          {valueFormatter(payload[0].value as number)}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// 图表容器组件 - 更紧凑的设计
-interface ChartCardProps {
+const chartConfigs: Array<{
+  key: TrendMetricKey;
   title: string;
   subtitle: string;
-  platform: 'meituan' | 'eleme';
-  children: React.ReactNode;
-}
+  valueFormatter: (value: number) => string;
+  tickFormatter?: (value: number) => string;
+}> = [
+  {
+    key: 'cancellations',
+    title: '解约趋势',
+    subtitle: '双平台每日解约量对比',
+    valueFormatter: formatNumber,
+  },
+  {
+    key: 'commissionStores',
+    title: '抽点店铺趋势',
+    subtitle: '双平台每日抽点店铺变化',
+    valueFormatter: formatNumber,
+  },
+  {
+    key: 'totalRevenue',
+    title: '回款趋势',
+    subtitle: '双平台每日回款金额走势',
+    valueFormatter: formatCurrency,
+    tickFormatter: (value) => `${(value / 1000).toFixed(0)}k`,
+  },
+];
 
-function ChartCard({ title, subtitle, platform, children }: ChartCardProps) {
-  const dotColor = platform === 'meituan' ? 'bg-[hsl(var(--meituan))]' : 'bg-[hsl(var(--eleme))]';
-  const titleColor = platform === 'meituan' ? 'text-meituan' : 'text-eleme';
+function TrendTooltip({ active, label, payload, valueFormatter }: TooltipProps) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  const metricMap = Object.fromEntries(payload.map((item) => [item.dataKey, item.value]));
 
   return (
-    <div className="glass-card glass-card-hover rounded-xl overflow-hidden">
-      <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-        <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
-        <h3 className={`font-display text-sm ${titleColor}`}>{title}</h3>
-        <span className="text-[10px] text-foreground/40">· {subtitle}</span>
+    <div className="glass-card rounded-xl px-4 py-3 border border-foreground/10 shadow-xl min-w-[180px]">
+      <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/40 mb-2">{label}</p>
+      <div className="space-y-2 text-sm">
+        <TooltipRow label="美团" value={valueFormatter(metricMap.meituan ?? 0)} color="bg-[hsl(var(--meituan))]" />
+        <TooltipRow label="饿了么" value={valueFormatter(metricMap.eleme ?? 0)} color="bg-[hsl(var(--eleme))]" />
+        <TooltipRow label="合计" value={valueFormatter(metricMap.total ?? 0)} color="bg-foreground/60" />
       </div>
-      <div className="px-2 pb-3">
-        {children}
+    </div>
+  );
+}
+
+function TooltipRow({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center gap-2">
+        <span className={`w-2 h-2 rounded-full ${color}`}></span>
+        <span className="text-foreground/60">{label}</span>
       </div>
+      <span className="font-mono font-semibold text-foreground">{value}</span>
     </div>
   );
 }
 
-// 解约趋势图
-export function CancellationsChart({ data }: ChartsProps) {
-  const meituanChartData = filterMeituanData(data).map((item) => ({
-    date: item.date.substring(5),
-    value: item.meituan.cancellations,
-  }));
-
-  const elemeChartData = data.map((item) => ({
-    date: item.date.substring(5),
-    value: item.eleme.cancellations,
-  }));
-
-  // Calculate averages
-  const meituanAverage = meituanChartData.length
-    ? meituanChartData.reduce((sum, item) => sum + item.value, 0) / meituanChartData.length
-    : 0;
-  const elemeAverage = elemeChartData.length
-    ? elemeChartData.reduce((sum, item) => sum + item.value, 0) / elemeChartData.length
-    : 0;
+function TrendChartCard({
+  chartKey,
+  title,
+  subtitle,
+  data,
+  valueFormatter,
+  tickFormatter,
+}: {
+  chartKey: TrendMetricKey;
+  title: string;
+  subtitle: string;
+  data: CombinedDailyData[];
+  valueFormatter: (value: number) => string;
+  tickFormatter?: (value: number) => string;
+}) {
+  const chartData = buildCombinedMetricSeries(data, chartKey);
 
   return (
-    <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
-      <ChartCard title="美团解约" subtitle="每日变化" platform="meituan">
-        <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={meituanChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+    <section id={chartKey} className="glass-card rounded-[28px] p-4 sm:p-6 lg:p-7">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-5">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-foreground/35 mb-2">Trend View</p>
+          <h2 className="font-display text-xl sm:text-2xl text-foreground">{title}</h2>
+          <p className="text-sm text-foreground/50 mt-1">{subtitle}</p>
+        </div>
+        <div className="text-xs text-foreground/45">单图并列展示美团与饿了么，灰色面积为双平台合计</div>
+      </div>
+
+      <div className="h-[300px] sm:h-[340px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={chartData} margin={{ top: 16, right: 16, left: -16, bottom: 0 }}>
             <defs>
-              <linearGradient id="meituanGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--meituan))" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="hsl(var(--meituan))" stopOpacity={0} />
+              <linearGradient id={`${chartKey}-total`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsla(220, 10%, 70%, 0.32)" />
+                <stop offset="100%" stopColor="hsla(220, 10%, 70%, 0)" />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-            <Tooltip content={<CustomTooltip platform="meituan" />} />
-            <ReferenceLine 
-              y={meituanAverage} 
-              stroke="red" 
-              strokeDasharray="5 5" 
-              strokeWidth={2}
-              label={{ 
-                value: formatNumber(Math.round(meituanAverage)), 
-                position: 'insideTopLeft', 
-                fill: 'red', 
-                fontSize: 11,
-                fontWeight: 600,
-                dx: 5,
-                dy: -5
-              }}
+            <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+            <YAxis
+              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={tickFormatter}
             />
-            <Area type="monotone" dataKey="value" stroke="hsl(var(--meituan))" strokeWidth={2} fill="url(#meituanGradient)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--meituan))', strokeWidth: 0 }} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </ChartCard>
-
-      <ChartCard title="饿了么解约" subtitle="每日变化" platform="eleme">
-        <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={elemeChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="elemeGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--eleme))" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="hsl(var(--eleme))" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-            <Tooltip content={<CustomTooltip platform="eleme" />} />
-            <ReferenceLine 
-              y={elemeAverage} 
-              stroke="red" 
-              strokeDasharray="5 5" 
-              strokeWidth={2}
-              label={{ 
-                value: formatNumber(Math.round(elemeAverage)), 
-                position: 'insideTopLeft', 
-                fill: 'red', 
-                fontSize: 11,
-                fontWeight: 600,
-                dx: 5,
-                dy: -5
-              }}
+            <Tooltip content={<TrendTooltip valueFormatter={valueFormatter} />} />
+            <Legend wrapperStyle={{ paddingTop: 18, fontSize: '12px' }} />
+            <Area
+              type="monotone"
+              dataKey="total"
+              name="双平台合计"
+              fill={`url(#${chartKey}-total)`}
+              stroke="hsl(var(--foreground))"
+              strokeOpacity={0.18}
+              strokeWidth={1.5}
             />
-            <Area type="monotone" dataKey="value" stroke="hsl(var(--eleme))" strokeWidth={2} fill="url(#elemeGradient)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--eleme))', strokeWidth: 0 }} />
-          </AreaChart>
+            <Line
+              type="monotone"
+              dataKey="meituan"
+              name="美团"
+              stroke="hsl(var(--meituan))"
+              strokeWidth={3}
+              dot={false}
+              activeDot={{ r: 5, fill: 'hsl(var(--meituan))', strokeWidth: 0 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="eleme"
+              name="饿了么"
+              stroke="hsl(var(--eleme))"
+              strokeWidth={3}
+              dot={false}
+              activeDot={{ r: 5, fill: 'hsl(var(--eleme))', strokeWidth: 0 }}
+            />
+          </ComposedChart>
         </ResponsiveContainer>
-      </ChartCard>
-    </div>
+      </div>
+    </section>
   );
 }
 
-// 抽点店铺趋势图
-export function CommissionStoresChart({ data }: ChartsProps) {
-  const meituanChartData = filterMeituanData(data).map((item) => ({
-    date: item.date.substring(5),
-    value: item.meituan.commissionStores,
-  }));
-
-  const elemeChartData = data.map((item) => ({
-    date: item.date.substring(5),
-    value: item.eleme.commissionStores,
-  }));
-
+export function TrendCharts({ data }: TrendChartsProps) {
   return (
-    <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
-      <ChartCard title="美团抽点" subtitle="每日变化" platform="meituan">
-        <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={meituanChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="meituanGradient2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--meituan))" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="hsl(var(--meituan))" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-            <Tooltip content={<CustomTooltip platform="meituan" />} />
-            <Area type="monotone" dataKey="value" stroke="hsl(var(--meituan))" strokeWidth={2} fill="url(#meituanGradient2)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--meituan))', strokeWidth: 0 }} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </ChartCard>
-
-      <ChartCard title="饿了么抽点" subtitle="每日变化" platform="eleme">
-        <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={elemeChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="elemeGradient2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--eleme))" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="hsl(var(--eleme))" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-            <Tooltip content={<CustomTooltip platform="eleme" />} />
-            <Area type="monotone" dataKey="value" stroke="hsl(var(--eleme))" strokeWidth={2} fill="url(#elemeGradient2)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--eleme))', strokeWidth: 0 }} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </ChartCard>
-    </div>
-  );
-}
-
-// 回款金额趋势图
-export function RevenueChart({ data }: ChartsProps) {
-  const meituanChartData = filterMeituanData(data).map((item) => ({
-    date: item.date.substring(5),
-    value: item.meituan.totalRevenue,
-  }));
-
-  const elemeChartData = data.map((item) => ({
-    date: item.date.substring(5),
-    value: item.eleme.totalRevenue,
-  }));
-
-  return (
-    <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
-      <ChartCard title="美团回款" subtitle="每日变化" platform="meituan">
-        <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={meituanChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-            <defs>
-              <linearGradient id="meituanGradient3" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--meituan))" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="hsl(var(--meituan))" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-            <Tooltip content={<CustomTooltip platform="meituan" valueFormatter={formatCurrency} />} />
-            <Area type="monotone" dataKey="value" stroke="hsl(var(--meituan))" strokeWidth={2} fill="url(#meituanGradient3)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--meituan))', strokeWidth: 0 }} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </ChartCard>
-
-      <ChartCard title="饿了么回款" subtitle="每日变化" platform="eleme">
-        <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={elemeChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-            <defs>
-              <linearGradient id="elemeGradient3" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--eleme))" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="hsl(var(--eleme))" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-            <Tooltip content={<CustomTooltip platform="eleme" valueFormatter={formatCurrency} />} />
-            <Area type="monotone" dataKey="value" stroke="hsl(var(--eleme))" strokeWidth={2} fill="url(#elemeGradient3)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--eleme))', strokeWidth: 0 }} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </ChartCard>
+    <div className="space-y-4 sm:space-y-6">
+      {chartConfigs.map((config) => (
+        <TrendChartCard
+          key={config.key}
+          chartKey={config.key}
+          title={config.title}
+          subtitle={config.subtitle}
+          data={data}
+          valueFormatter={config.valueFormatter}
+          tickFormatter={config.tickFormatter}
+        />
+      ))}
     </div>
   );
 }

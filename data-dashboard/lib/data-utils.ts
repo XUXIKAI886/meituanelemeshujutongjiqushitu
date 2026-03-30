@@ -1,4 +1,4 @@
-import { DailyData, PlatformData, CombinedDailyData } from './types';
+import { DailyData, CombinedDailyData } from './types';
 
 /**
  * 合并两个平台的数据,按日期对齐
