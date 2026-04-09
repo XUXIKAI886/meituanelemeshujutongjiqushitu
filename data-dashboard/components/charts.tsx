@@ -12,18 +12,10 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { formatCurrency, formatNumber } from '@/lib/data-utils';
+import { buildPlatformMetricSeries, calculateSeriesAverage } from '@/lib/chart-series';
 
 interface ChartsProps {
   data: CombinedDailyData[];
-}
-
-// 过滤美团数据，排除所有指标都为0的记录
-function filterMeituanData(data: CombinedDailyData[]) {
-  return data.filter((item) =>
-    item.meituan.cancellations !== 0 ||
-    item.meituan.commissionStores !== 0 ||
-    item.meituan.totalRevenue !== 0
-  );
 }
 
 // 自定义 Tooltip 组件 - 更紧凑的设计
@@ -82,23 +74,11 @@ function ChartCard({ title, subtitle, platform, children }: ChartCardProps) {
 
 // 解约趋势图
 export function CancellationsChart({ data }: ChartsProps) {
-  const meituanChartData = filterMeituanData(data).map((item) => ({
-    date: item.date.substring(5),
-    value: item.meituan.cancellations,
-  }));
+  const meituanChartData = buildPlatformMetricSeries(data, 'meituan', 'cancellations');
+  const elemeChartData = buildPlatformMetricSeries(data, 'eleme', 'cancellations');
 
-  const elemeChartData = data.map((item) => ({
-    date: item.date.substring(5),
-    value: item.eleme.cancellations,
-  }));
-
-  // Calculate averages
-  const meituanAverage = meituanChartData.length
-    ? meituanChartData.reduce((sum, item) => sum + item.value, 0) / meituanChartData.length
-    : 0;
-  const elemeAverage = elemeChartData.length
-    ? elemeChartData.reduce((sum, item) => sum + item.value, 0) / elemeChartData.length
-    : 0;
+  const meituanAverage = calculateSeriesAverage(meituanChartData);
+  const elemeAverage = calculateSeriesAverage(elemeChartData);
 
   return (
     <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
@@ -173,15 +153,8 @@ export function CancellationsChart({ data }: ChartsProps) {
 
 // 抽点店铺趋势图
 export function CommissionStoresChart({ data }: ChartsProps) {
-  const meituanChartData = filterMeituanData(data).map((item) => ({
-    date: item.date.substring(5),
-    value: item.meituan.commissionStores,
-  }));
-
-  const elemeChartData = data.map((item) => ({
-    date: item.date.substring(5),
-    value: item.eleme.commissionStores,
-  }));
+  const meituanChartData = buildPlatformMetricSeries(data, 'meituan', 'commissionStores');
+  const elemeChartData = buildPlatformMetricSeries(data, 'eleme', 'commissionStores');
 
   return (
     <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
@@ -226,15 +199,8 @@ export function CommissionStoresChart({ data }: ChartsProps) {
 
 // 回款金额趋势图
 export function RevenueChart({ data }: ChartsProps) {
-  const meituanChartData = filterMeituanData(data).map((item) => ({
-    date: item.date.substring(5),
-    value: item.meituan.totalRevenue,
-  }));
-
-  const elemeChartData = data.map((item) => ({
-    date: item.date.substring(5),
-    value: item.eleme.totalRevenue,
-  }));
+  const meituanChartData = buildPlatformMetricSeries(data, 'meituan', 'totalRevenue');
+  const elemeChartData = buildPlatformMetricSeries(data, 'eleme', 'totalRevenue');
 
   return (
     <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">

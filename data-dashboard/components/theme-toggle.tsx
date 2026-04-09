@@ -1,22 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+
+type ThemeMode = 'dark' | 'light';
+
+function subscribeToMountState() {
+  return () => {};
+}
+
+function getServerMountState() {
+  return false;
+}
+
+function getClientMountState() {
+  return true;
+}
+
+function getStoredTheme(): ThemeMode {
+  if (typeof window === 'undefined') {
+    return 'dark';
+  }
+
+  return localStorage.getItem('theme') === 'light' ? 'light' : 'dark';
+}
 
 export function ThemeToggle() {
-  const [isDark, setIsDark] = useState(true);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    // 检查本地存储或系统偏好
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setIsDark(savedTheme === 'dark');
-    } else {
-      // 默认使用暗黑主题
-      setIsDark(true);
-    }
-  }, []);
+  const mounted = useSyncExternalStore(
+    subscribeToMountState,
+    getClientMountState,
+    getServerMountState
+  );
+  const [theme, setTheme] = useState<ThemeMode>(() => getStoredTheme());
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     if (!mounted) return;
@@ -32,7 +47,7 @@ export function ThemeToggle() {
   }, [isDark, mounted]);
 
   const toggleTheme = () => {
-    setIsDark(!isDark);
+    setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'));
   };
 
   // 避免 hydration 不匹配
@@ -45,7 +60,7 @@ export function ThemeToggle() {
   }
 
   return (
-    <button
+      <button
       onClick={toggleTheme}
       className="theme-toggle"
       aria-label={isDark ? '切换到明亮模式' : '切换到暗黑模式'}
