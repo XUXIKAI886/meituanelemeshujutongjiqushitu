@@ -12,7 +12,11 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { formatCurrency, formatNumber } from '@/lib/data-utils';
-import { buildPlatformMetricSeries, calculateSeriesAverage } from '@/lib/chart-series';
+import {
+  buildPlatformMetricSeries,
+  calculateSeriesAverage,
+  formatChartAxisDateLabel,
+} from '@/lib/chart-series';
 
 interface ChartsProps {
   data: CombinedDailyData[];
@@ -92,7 +96,7 @@ export function CancellationsChart({ data }: ChartsProps) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="date" tickFormatter={formatChartAxisDateLabel} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip platform="meituan" />} />
             <ReferenceLine 
@@ -125,7 +129,7 @@ export function CancellationsChart({ data }: ChartsProps) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="date" tickFormatter={formatChartAxisDateLabel} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip platform="eleme" />} />
             <ReferenceLine 
@@ -168,7 +172,7 @@ export function CommissionStoresChart({ data }: ChartsProps) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="date" tickFormatter={formatChartAxisDateLabel} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip platform="meituan" />} />
             <Area type="monotone" dataKey="value" stroke="hsl(var(--meituan))" strokeWidth={2} fill="url(#meituanGradient2)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--meituan))', strokeWidth: 0 }} />
@@ -186,7 +190,7 @@ export function CommissionStoresChart({ data }: ChartsProps) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="date" tickFormatter={formatChartAxisDateLabel} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip platform="eleme" />} />
             <Area type="monotone" dataKey="value" stroke="hsl(var(--eleme))" strokeWidth={2} fill="url(#elemeGradient2)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--eleme))', strokeWidth: 0 }} />
@@ -214,7 +218,7 @@ export function RevenueChart({ data }: ChartsProps) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="date" tickFormatter={formatChartAxisDateLabel} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
             <Tooltip content={<CustomTooltip platform="meituan" valueFormatter={formatCurrency} />} />
             <Area type="monotone" dataKey="value" stroke="hsl(var(--meituan))" strokeWidth={2} fill="url(#meituanGradient3)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--meituan))', strokeWidth: 0 }} />
@@ -232,7 +236,7 @@ export function RevenueChart({ data }: ChartsProps) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="date" tickFormatter={formatChartAxisDateLabel} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
             <Tooltip content={<CustomTooltip platform="eleme" valueFormatter={formatCurrency} />} />
             <Area type="monotone" dataKey="value" stroke="hsl(var(--eleme))" strokeWidth={2} fill="url(#elemeGradient3)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--eleme))', strokeWidth: 0 }} />

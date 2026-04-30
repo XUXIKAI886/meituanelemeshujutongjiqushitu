@@ -30,10 +30,17 @@ export function buildPlatformMetricSeries(
   return data
     .filter((item) => hasPlatformData(item, platform))
     .map((item) => ({
-      date: item.date.substring(5),
+      date: item.date,
       fullDate: item.date,
       value: item[platform][metric],
     }));
+}
+
+/**
+ * 横轴显示使用短日期，但内部仍保留完整日期作为唯一键。
+ */
+export function formatChartAxisDateLabel(date: string): string {
+  return date.length >= 10 ? date.substring(5) : date;
 }
 
 /**
