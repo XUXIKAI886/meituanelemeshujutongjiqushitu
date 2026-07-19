@@ -5002,13 +5002,13 @@
       {
         "date": "2026-07-17",
         "cancellations": 13,
-        "commissionStores": 290,
-        "totalRevenue": 1583.98
+        "commissionStores": 289,
+        "totalRevenue": 1612.52
       },
       {
         "date": "2026-07-18",
         "cancellations": 2,
-        "commissionStores": 295,
+        "commissionStores": 294,
         "totalRevenue": 1526.14
       }
     ]
