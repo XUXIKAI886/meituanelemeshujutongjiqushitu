@@ -5224,19 +5224,19 @@
       {
         "date": "2026-08-04",
         "cancellations": 4,
-        "commissionStores": 284,
-        "totalRevenue": 1680.73
+        "commissionStores": 285,
+        "totalRevenue": 1713.73
       },
       {
         "date": "2026-08-05",
         "cancellations": 6,
-        "commissionStores": 282,
+        "commissionStores": 281,
         "totalRevenue": 1626.71
       },
       {
         "date": "2026-08-06",
         "cancellations": 7,
-        "commissionStores": 305,
+        "commissionStores": 302,
         "totalRevenue": 1820.57
       }
     ]
