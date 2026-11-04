@@ -246,3 +246,13 @@ https://xuxikai886.github.io/meituanelemeshujutongjiqushitu/
 ### 每日全流程验证补充（2026-10-10）
 
 - 最终推送后确认线上生效时，读取 `https://xuxikai886.github.io/meituanelemeshujutongjiqushitu/data/platform-data.json?verify=<本次commit>`，保存到当日执行证据目录；要求 HTTP 200、可解析为 JSON，并与本地最终 `data-dashboard/public/data/platform-data.json` 全量一致。记录两平台条数和比较结果，可用于证明数据部署已生效。若 Actions 尚未完成或线上仍缓存旧内容，只等待并复查部署/数据请求，不重跑已成功的 Excel 同步、回款修正或创建无差异提交。
+
+### 每日全流程顺序调整（2026-11-03）
+
+- `daily-workflow-executor` 的执行顺序已改为 …步骤6 → 步骤8 → 步骤7 → 步骤9…：步骤8（回款同步）在本步骤之前完成，本步骤运行时 `meituanData.json` / `elmCycleData.json` 已是本轮最终标准。上文"步骤8在本步骤之后更新标准、必须回补本 Skill 并二次推送"的规则（174、187、205—206 行附近）不再适用；对比、修正和结构保护规则继续有效，只是在本步骤里一次完成。
+- 比较与回补已固化为脚本 `F:\baech0485-code\yciixingzhixingsuoyou-skill\.claude\skills\daily-workflow-executor\scripts\step7_dashboard_reconcile.py`。流程：复制两个 Excel → `node scripts/generate-data.js` → `python step7_dashboard_reconcile.py --check`。退出码1时执行 `--apply --evidence-dir <当日证据目录>`，再重新复制、生成、`--check`，直到退出码0，然后只提交、推送一次。
+- 脚本已实现上文规则：
+  - 全部重叠日期全量比较，金额容差 `1e-8`，店铺数严格相等；
+  - 只改回款金额和店铺数单元格，不动解约列；单元格级写入；
+  - 写前备份到 `%TEMP%`，写后核对工作表、尺寸、冻结窗格、合并区域、列宽、行高、公式数、样式和非目标单元格，任一不符就从备份恢复，退出码2；
+  - 没有差异的工作簿不保存。
